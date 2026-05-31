@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: tomcruise-dbd-extractor
+Version: 0.1.0
+Summary: DBD DataWarehouse company extraction system
+Requires-Python: >=3.11
+Requires-Dist: requests>=2.32.0
+Requires-Dist: openpyxl>=3.1.0
+Requires-Dist: cryptography>=42.0.0
+Requires-Dist: playwright>=1.60.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=7.0.0; extra == "dev"
