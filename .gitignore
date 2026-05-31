@@ -1,11 +1,16 @@
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Tests / coverage
 .pytest_cache/
 .coverage
+htmlcov/
 
+# Runtime output
 output/
 logs/
 
+# Local caches / downloaded runtimes
 cache/
-cache/ms-playwright/
-
-*.pyc
