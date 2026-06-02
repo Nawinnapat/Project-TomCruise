@@ -15,8 +15,12 @@ from models.company import CompanyRecord
 def test_exporters_write_csv_xlsx_json_and_report(tmp_path):
     records = [
         CompanyRecord(
-            company_name="ปตท. จำกัด (มหาชน)",
+            company_name="PTT PUBLIC COMPANY LIMITED",
             juristic_id="0107544000108",
+            registration_business_type="10799 การผลิตผลิตภัณฑ์อาหารอื่น ๆ ซึ่งมิได้จัดประเภทไว้ในที่อื่น",
+            registration_business_objective="ประกอบกิจการผลิตอาหาร เครื่องดื่ม และเครื่องบริโภคอื่นๆ",
+            latest_financial_business_type="11043 การผลิตเครื่องดื่มกาแฟ ชาและชาชงสมุนไพรพร้อมดื่ม",
+            latest_financial_business_objective="การผลิตเครื่องดื่มกาแฟ ชาและชาชงสมุนไพรพร้อมดื่ม",
             revenue=100,
             confidence_score=100,
             review_required=False,
@@ -33,16 +37,18 @@ def test_exporters_write_csv_xlsx_json_and_report(tmp_path):
     with (tmp_path / "results.csv").open(encoding="utf-8-sig", newline="") as file:
         rows = list(csv.DictReader(file))
     assert rows[0]["juristic_id"] == "0107544000108"
+    assert rows[0]["registration_business_type"].startswith("10799 ")
 
     with (tmp_path / "errors.csv").open(encoding="utf-8-sig", newline="") as file:
         error_rows = list(csv.DictReader(file))
     assert error_rows[0]["errors"] == "NOT_FOUND"
 
     workbook = load_workbook(tmp_path / "results.xlsx", read_only=True)
-    assert workbook.active["A2"].value == "ปตท. จำกัด (มหาชน)"
+    assert workbook.active["A2"].value == "PTT PUBLIC COMPANY LIMITED"
 
     payload = json.loads((tmp_path / "results.json").read_text(encoding="utf-8"))
     assert payload[0]["revenue"] == 100
+    assert payload[0]["latest_financial_business_objective"] == "การผลิตเครื่องดื่มกาแฟ ชาและชาชงสมุนไพรพร้อมดื่ม"
 
     report = json.loads((tmp_path / "processing_report.json").read_text(encoding="utf-8"))
     assert report["total"] == 2

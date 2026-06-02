@@ -34,10 +34,11 @@ class DbdHttpClient:
                 "Accept-Language": "th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7",
                 "Content-Type": "application/json",
                 "Origin": settings.dbd_base_url,
-                "User-Agent": settings.user_agent,
                 "Referer": f"{settings.dbd_base_url}/",
             }
         )
+        if settings.user_agent:
+            self.session.headers["User-Agent"] = settings.user_agent
         if settings.dbd_cookie:
             self.session.headers["Cookie"] = settings.dbd_cookie
 
@@ -91,6 +92,8 @@ class DbdHttpClient:
         self.access_token = auth_state.access_token
         self.access_token_exp = auth_state.expires_at
         self.session.headers["Authorization"] = f"Bearer {auth_state.access_token}"
+        if auth_state.user_agent:
+            self.session.headers["User-Agent"] = auth_state.user_agent
         self.session.cookies.clear()
         for cookie in auth_state.cookies:
             if not cookie.get("name"):

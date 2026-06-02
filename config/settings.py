@@ -13,14 +13,12 @@ class Settings:
     min_delay_seconds: float = float(os.getenv("DBD_MIN_DELAY_SECONDS", "0.8"))
     max_delay_seconds: float = float(os.getenv("DBD_MAX_DELAY_SECONDS", "2.2"))
     cache_ttl_seconds: int = int(os.getenv("DBD_CACHE_TTL_SECONDS", str(24 * 60 * 60)))
-    user_agent: str = os.getenv(
-        "DBD_USER_AGENT",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    )
+    user_agent: str = os.getenv("DBD_USER_AGENT", "")
     dbd_cookie: str = os.getenv("DBD_COOKIE", "")
-    dbd_playwright_headless: bool = os.getenv("DBD_PLAYWRIGHT_HEADLESS", "true").lower() not in {"0", "false", "no"}
+    dbd_playwright_channel: str = os.getenv("DBD_PLAYWRIGHT_CHANNEL", "chrome")
+    dbd_playwright_headless: bool = os.getenv("DBD_PLAYWRIGHT_HEADLESS", "false").lower() in {"1", "true", "yes"}
     dbd_playwright_timeout_seconds: int = int(os.getenv("DBD_PLAYWRIGHT_TIMEOUT_SECONDS", "45"))
+    dbd_chrome_profile_dir: Path = Path(os.getenv("DBD_CHROME_PROFILE_DIR", "cache/dbd-chrome-profile"))
     cache_dir: Path = Path(os.getenv("DBD_CACHE_DIR", "cache"))
     logs_dir: Path = Path(os.getenv("DBD_LOGS_DIR", "logs"))
     output_dir: Path = Path(os.getenv("DBD_OUTPUT_DIR", "output"))

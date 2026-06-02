@@ -38,12 +38,15 @@ class ExtractionService:
         juristic_id = company_input.juristic_id
         juristic_type = "5"
         confidence = 100 if valid_juristic_id(juristic_id) else 0
+        search_result: dict[str, object] | None = None
 
         if juristic_id:
             search_payload = self.client.search_companies(juristic_id)
             for candidate in parse_search_results(search_payload):
                 if candidate.get("juristic_id") == juristic_id:
                     juristic_type = str(candidate.get("juristic_type") or juristic_type)
+                    raw_candidate = candidate.get("raw")
+                    search_result = raw_candidate if isinstance(raw_candidate, dict) else None
                     break
         else:
             search_payload = self.client.search_companies(company_input.company_name or "")
@@ -53,6 +56,8 @@ class ExtractionService:
                 return CompanyRecord(company_name=company_input.company_name, confidence_score=0, errors=["NOT_FOUND"])
             juristic_id = str(match.get("juristic_id") or "")
             juristic_type = str(match.get("juristic_type") or "5")
+            raw_candidate = match.get("raw")
+            search_result = raw_candidate if isinstance(raw_candidate, dict) else None
 
         if not valid_juristic_id(juristic_id):
             return CompanyRecord(
@@ -66,7 +71,7 @@ class ExtractionService:
         history = self._history(juristic_type, juristic_id)
         years = fiscal_years or _profile_fiscal_years(profile)
         financials = self._financials(juristic_type, juristic_id, years)
-        record = parse_company_record(profile, financials=financials, history=history)
+        record = parse_company_record(profile, financials=financials, history=history, search_result=search_result)
         record.juristic_id = record.juristic_id or juristic_id
         record.confidence_score = confidence
         record.review_required = confidence < 60

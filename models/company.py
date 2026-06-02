@@ -13,6 +13,10 @@ class CompanyRecord:
     registered_capital: float | None = None
     address: str | None = None
     business_type: str | None = None
+    registration_business_type: str | None = None
+    registration_business_objective: str | None = None
+    latest_financial_business_type: str | None = None
+    latest_financial_business_objective: str | None = None
     industry_code: str | None = None
     revenue: float | None = None
     profit: float | None = None
@@ -36,4 +40,3 @@ class CompanyRecord:
 class CompanyInput:
     company_name: str | None = None
     juristic_id: str | None = None
-

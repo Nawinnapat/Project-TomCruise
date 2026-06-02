@@ -18,6 +18,7 @@ class DbdAuthState:
     access_token: str
     expires_at: int
     cookies: list[dict[str, Any]]
+    user_agent: str | None = None
 
 
 class PlaywrightDbdAuthenticator:
@@ -34,14 +35,26 @@ class PlaywrightDbdAuthenticator:
         timeout_ms = settings.dbd_playwright_timeout_seconds * 1000
         processing_logger.info("DBD Playwright token acquisition started")
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=settings.dbd_playwright_headless)
-            context = browser.new_context(
-                user_agent=settings.user_agent,
+            context = playwright.chromium.launch_persistent_context(
+                user_data_dir=str(settings.dbd_chrome_profile_dir),
+                channel=settings.dbd_playwright_channel,
+                headless=settings.dbd_playwright_headless,
                 locale="th-TH",
                 timezone_id="Asia/Bangkok",
                 extra_http_headers={
                     "Accept-Language": "th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7",
                 },
+            )
+            browser = context.browser
+            browser_type = browser.browser_type.name if browser else "chromium"
+            browser_version = browser.version if browser else "unknown"
+            processing_logger.info(
+                "DBD browser auth started type=%s version=%s channel=%s mode=%s profile=%s",
+                browser_type,
+                browser_version,
+                settings.dbd_playwright_channel,
+                "headless" if settings.dbd_playwright_headless else "headed",
+                settings.dbd_chrome_profile_dir,
             )
             page = context.new_page()
             page.set_default_timeout(timeout_ms)
@@ -54,18 +67,23 @@ class PlaywrightDbdAuthenticator:
                 if not expires_at:
                     raise RuntimeError("DBD anonymous JWT did not include exp")
                 cookies = context.cookies(settings.dbd_base_url)
+                user_agent = page.evaluate("() => navigator.userAgent")
                 processing_logger.info(
                     "DBD Playwright token acquired exp=%s cookies=%s",
                     expires_at,
                     ",".join(sorted(cookie.get("name", "") for cookie in cookies)),
                 )
-                return DbdAuthState(access_token=token, expires_at=expires_at, cookies=cookies)
+                return DbdAuthState(
+                    access_token=token,
+                    expires_at=expires_at,
+                    cookies=cookies,
+                    user_agent=str(user_agent) if user_agent else None,
+                )
             except Exception as exc:  # noqa: BLE001 - convert all browser auth failures into one boundary error
                 error_logger.error("DBD Playwright token acquisition failed error=%s", exc)
                 raise
             finally:
                 context.close()
-                browser.close()
 
     @staticmethod
     def _refresh_from_page(page: Any) -> str:
@@ -92,6 +110,7 @@ class PlaywrightDbdAuthenticator:
         )
         status = int(result.get("status") or 0)
         payload = result.get("payload") if isinstance(result, dict) else None
+        processing_logger.info("DBD Playwright refresh status=%s kind=%s", status, result.get("textKind"))
         if status >= 400:
             error_logger.error("DBD Playwright refresh returned HTTP %s kind=%s", status, result.get("textKind"))
             raise RuntimeError(f"DBD Playwright refresh failed: HTTP {status}")

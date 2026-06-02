@@ -42,8 +42,10 @@ def parse_company_record(
     profile: Any,
     financials: dict[str, Any] | None = None,
     history: list[dict[str, Any]] | None = None,
+    search_result: dict[str, Any] | None = None,
 ) -> CompanyRecord:
     item = _items(profile)[0] if _items(profile) else {}
+    source_item = _merge_company_sources(item, search_result or {})
     latest_financial = _latest_financial(financials or {})
     record = CompanyRecord(
         company_name=clean_text(_pick(item, "jpName", "name", "nameTh", "JuristicName", "JuristicName_TH")),
@@ -61,6 +63,18 @@ def parse_company_record(
             or _pick_nested(item, ("setupObjType", "objDesc"))
             or _pick_string(item, "businessTypeDesc", "Objective", "BusinessType")
         ),
+        registration_business_type=_business_classification(
+            source_item,
+            "setupObjCode",
+            ("setupObjType", "objDesc"),
+        ),
+        registration_business_objective=clean_text(_pick(source_item, "setupObjNameKeyin")),
+        latest_financial_business_type=_business_classification(
+            source_item,
+            "submitObjCode",
+            ("submitObjType", "objDesc"),
+        ),
+        latest_financial_business_objective=clean_text(_pick(source_item, "submitObjNameKeyin")),
         industry_code=clean_text(_pick(item, "submitObjCode", "setupObjCode", "tsicCode", "StandardID")),
         revenue=parse_number(
             _pick(latest_financial, "revenue", "revenueA", "totalIncome", "totalRevenue", "TotalRevenue")
@@ -84,7 +98,7 @@ def parse_company_record(
         historical_changes=history or [],
         source_url=None,
         extraction_timestamp=datetime.utcnow().isoformat(timespec="seconds") + "Z",
-        raw={"profile": profile, "financials": financials or {}, "history": history or []},
+        raw={"profile": profile, "search_result": search_result or {}, "financials": financials or {}, "history": history or []},
     )
     return record
 
@@ -94,6 +108,22 @@ def _pick(source: dict[str, Any], *keys: str) -> Any:
         if source.get(key) not in (None, ""):
             return source[key]
     return None
+
+
+def _merge_company_sources(primary: dict[str, Any], fallback: dict[str, Any]) -> dict[str, Any]:
+    merged = dict(fallback)
+    for key, value in primary.items():
+        if value not in (None, ""):
+            merged[key] = value
+    return merged
+
+
+def _business_classification(source: dict[str, Any], code_key: str, description_path: tuple[str, ...]) -> str | None:
+    code = clean_text(_pick(source, code_key))
+    description = clean_text(_pick_nested(source, description_path))
+    if code and description:
+        return f"{code} {description}"
+    return description
 
 
 def _pick_string(source: dict[str, Any], *keys: str) -> str | None:
