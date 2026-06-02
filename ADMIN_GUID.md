@@ -71,6 +71,44 @@ python -m src.main --name "PTT PUBLIC COMPANY LIMITED" --years 2568 --output-dir
 python -m src.main --juristic-id 0107544000108 --output-dir output\auto_year
 ```
 
+## วิธีเปิดโปรแกรม Web UI
+
+ใช้คำสั่งนี้เวลาอยากเปิดหน้าจอโปรแกรมแบบเว็บ:
+
+```powershell
+cd "C:\Project_CODE🧑‍💻\Project TomCruise"
+
+.\.venv\Scripts\Activate.ps1
+
+streamlit run app.py
+```
+
+ถ้า PowerShell ไม่ยอม activate ให้รันอันนี้ก่อน:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+streamlit run app.py
+```
+
+พอรันแล้ว จะมีลิงก์ประมาณนี้ขึ้นมา:
+
+```text
+Local URL: http://localhost:8501
+```
+
+ให้กด Ctrl + คลิกที่ลิงก์ หรือเปิด browser แล้วเข้า:
+
+```text
+http://localhost:8501
+```
+
+ถ้าอยากรันแบบไม่ activate ให้ใช้คำสั่งนี้ได้เลย:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
 ## รันหลายปี
 
 ```powershell
